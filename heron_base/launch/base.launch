@@ -8,6 +8,12 @@
     <arg name="namespace" value="$(arg namespace)" />
   </include>
 
+  <!-- MIT NMEA NODE -->
+  <group if="$(optenv MIT_CONFIG false)">
+    <include file="$(find heron_nmea)/launch/nmea_if.launch" />
+  </group>
+
+
   <group ns="/$(arg namespace)">
 
     <arg name="port" default="/dev/arduino" />
@@ -69,6 +75,9 @@
          <param name="lt_model" value="true" />
          <param name="linear_acceleration_stdev" value="0.38" />
          <param name="frame_id" value="imu_link" />
+         <param name="use_magnetic_field_msg" value="true"/>
+	 <param name="mag_updates" value="false" />
+	 <param name="apply_mag_correction_transform" value="$(optenv MIT_CONFIG false)" />
        </node>
       </group>
 
@@ -80,6 +89,9 @@
          <param name="lt_model" value="true" />
          <param name="linear_acceleration_stdev" value="0.38" />
          <param name="frame_id" value="$(arg namespace)/imu_link" />
+         <param name="use_magnetic_field_msg" value="true"/>
+	 <param name="mag_updates" value="false" />
+	 <param name="apply_mag_correction_transform" value="$(optenv MIT_CONFIG false)" />
        </node>
       </group>
     </group>
@@ -87,10 +99,13 @@
     <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_madgwick">
       <rosparam file="$(env HERON_MAG_CONFIG)" />
       <param name="~use_mag" value="$(arg use_mag)" />
-      <param name="~use_magnetic_field_msg" value="false" />
+      <param name="~use_magnetic_field_msg" value="true" />
       <param name="world_frame" value="enu" />
       <param name="publish_tf" value="false" />
       <param name="publish_debug_topics" value="true" />
+      <param name="~gain" value="0.5" />
+      <param name="~zeta" value="0.0" />
+      <param name="~orientation_stddev" value="0.5" />
     </node>
 
     <!-- GPS serial comms -->

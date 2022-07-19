@@ -29,8 +29,8 @@ parser = ArgumentParser(description='Process IMU bag file for compass calibratio
 parser.add_argument('bag', metavar='FILE', type=str, help='input bag file')
 parser.add_argument('outfile', metavar='OUTFILE', type=str, help='output yaml file',
                     nargs="?", default="/tmp/calibration.yaml")
-parser.add_argument('namespace', type=str, help='robot namespace')
-parser.add_argument('--plots', type=bool, help='Show plots if matplotlib available.')
+parser.add_argument('namespace', nargs='?', default="", metavar="NAMESPACE", type=str, help='robot namespace')
+parser.add_argument('--plots', nargs='?', type=bool, default=False, help='Show plots if matplotlib available.')
 args = parser.parse_args()
 
 if not args.plots:
@@ -38,13 +38,19 @@ if not args.plots:
 
 namespace = args.namespace
 
+print("args.bag = " + args.bag)
+print("args.outfile = " + args.outfile)
+print("args.namespace = " + args.namespace)
+print("args.plots = " + str(args.plots))
+
+
 if namespace is not "/" and namespace is not "":
     namespace += "/"
 
 bag = rosbag.Bag(args.bag)
 imu_rot = Quaternion(0,0,0,1)
 transform_found = False
-for topic, msg, time in bag.read_messages(topics=("/tf", "/tf")):
+for topic, msg, time in bag.read_messages(topics=("/tf_static")):
         for c_trans in msg.transforms:
 		if ((namespace + "base_link") in c_trans.header.frame_id and (namespace + "imu_link") in c_trans.child_frame_id):
 			imu_rot = c_trans.transform.rotation
@@ -99,7 +105,7 @@ if pyplot:
 vecs = []
 for topic, msg, time in bag.read_messages(topics=("/" + namespace + "imu/mag", namespace + "imu/mag")):
   if time.to_sec() > time_start and time.to_sec() < time_end:
-	o_msg = matrix([msg.vector.x, msg.vector.y, msg.vector.z, 0])
+	o_msg = matrix([msg.magnetic_field.x, msg.magnetic_field.y, msg.magnetic_field.z, 0])
 	o_msg = o_msg.T
 	t_msg = t_mat*o_msg
 	vecs.append((float(t_msg[0]), float(t_msg[1]), float(t_msg[2])))
@@ -120,14 +126,16 @@ x,y,z = zip(*vecs)
 center_estimate = mean(x), mean(y)
 center, ier = optimize.leastsq(f_2, center_estimate)
 radius = calc_R(*center).mean()
+
 center = (center[0], center[1], mean(z))
 
+  
 a = arange(0, 2*pi + pi/50, pi/50)
 circle_points = (center[0] + cos(a) * radius,
                  center[1] + sin(a) * radius,
                  center[2] * ones(len(a)))
-
 print("Magnetic circle centered at " + str(center) + ", with radius " + str(radius))
+
 
 with open(args.outfile, "w") as f:
   f.write("# Generated from %s on %s.\n" % (args.bag, datetime.date.today()))
@@ -143,4 +151,7 @@ if pyplot:
   ax2.view_init(elev=80, azim=5)
   ax2.scatter(x, y, z)
   ax2.plot(*circle_points, c="red")
+  ax2.set_xlabel('X')
+  ax2.set_ylabel('Y')
+  ax2.set_zlabel('Z')
   pyplot.show()

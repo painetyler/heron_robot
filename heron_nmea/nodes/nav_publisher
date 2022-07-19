@@ -7,7 +7,7 @@ from time import sleep
 from heron_nmea.nmea_helpers import TxHelper
 from geometry_msgs.msg import TwistStamped, Vector3Stamped
 from nav_msgs.msg import Odometry
-from math import degrees, floor, fabs, atan2, hypot, pi
+from math import degrees, floor, fabs, atan2, hypot, pi, isnan
 from heron_nmea.rpy_helpers import sea_rpy_from_quaternion
 from sensor_msgs.msg import Imu, NavSatFix
 
@@ -32,6 +32,7 @@ class Nav(TxHelper):
     self.sub_fix = rospy.Subscriber("navsat/fix", NavSatFix, self._fix_cb)
     self.sub_odom = rospy.Subscriber("odom", Odometry, self._cb)
     self.sub_vel = rospy.Subscriber("navsat/vel", TwistStamped, self._vel)
+    self.sub_imu = rospy.Subscriber("imu/data", Imu, self._imu_cb)
     self.vel = None
     self.fix = None
 
@@ -41,16 +42,28 @@ class Nav(TxHelper):
   def _fix_cb(self, msg):
     self.fix = msg
 
+  def _imu_cb(self, msg):
+    self.imu = msg
+
   def _cb(self, msg):
     if self.fix is None:
         return
 
+    # Try to get rph from odom message
     roll, pitch, heading = sea_rpy_from_quaternion(msg.pose.pose.orientation)
+
+    # Override heading with value directly from IMU if EKF estimate is Nan
+    # This sometimes happens if GPS heading is non-existant, which results in
+    # NaN values for many state estimates from the EKF node.
+    if isnan(heading):
+      roll, pitch, heading = sea_rpy_from_quaternion(self.imu.orientation)
 
     # Override heading with value from GPS, when we have sufficient speed.
     if self.vel and hypot(self.vel.twist.linear.y, self.vel.twist.linear.x) > 0.2:
-      heading = (pi/2.0) - atan2(self.vel.twist.linear.y, self.vel.twist.linear.x)
+      heading = (pi/2.0) + atan2(self.vel.twist.linear.y, self.vel.twist.linear.x)
       if heading < 0: heading += 2*pi
+      if heading >= 2*pi: heading -= 2*pi
+
 
     self.tx(self.gps_time(),
         nmea_deg(self.fix.latitude), nmea_NS(self.fix.latitude),
