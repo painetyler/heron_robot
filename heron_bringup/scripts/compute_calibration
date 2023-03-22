@@ -86,8 +86,8 @@ if len(time_yaw_tuples) < 100:
 
 # if still no data, then exit.
 if len(time_yaw_tuples) < 100:
-  print("Insufficient data or no data in bag file. Looking for topic /" + namespace + "imu/rpy, or topic /" + namespace + "imu/rpy/raw)
- exit(1)
+  print("Insufficient data or no data in bag file. Looking for topic /" + namespace + "imu/rpy, or topic /" + namespace + "imu/rpy/raw")
+  exit(1)
 
 
 time_yaw = zip(*time_yaw_tuples)
