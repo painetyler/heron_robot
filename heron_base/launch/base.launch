@@ -99,13 +99,21 @@
     <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_madgwick">
       <rosparam file="$(env HERON_MAG_CONFIG)" />
       <param name="~use_mag" value="$(arg use_mag)" />
-      <param name="~use_magnetic_field_msg" value="true" />
       <param name="world_frame" value="enu" />
       <param name="publish_tf" value="false" />
       <param name="publish_debug_topics" value="true" />
-      <param name="~gain" value="0.5" />
-      <param name="~zeta" value="0.0" />
-      <param name="~orientation_stddev" value="0.5" />
+
+      <!-- Set values according to IMU used -->
+      <group if="$(optenv HERON_IMU_UM6 0)">
+        <param name="~use_magnetic_field_msg" value="true" />
+        <param name="~gain" value="0.5" />
+        <param name="~zeta" value="0.0" />
+        <param name="~orientation_stddev" value="0.5" />
+      </group>
+      <group unless="$(optenv HERON_IMU_UM6 0)">
+        <param name="~use_magnetic_field_msg" value="true" />	
+      </group>
+
     </node>
 
     <!-- GPS serial comms -->

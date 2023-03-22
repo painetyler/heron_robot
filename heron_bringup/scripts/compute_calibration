@@ -77,8 +77,17 @@ for topic, msg, time in bag.read_messages(topics=(namespace + "imu/rpy","/" + na
 
 
 if len(time_yaw_tuples) < 100:
-  print("Insufficient data or no data in bag file. Looking for topic /" + namespace + "imu/rpy.")
-  exit(1)
+  # try to find imu/rpy/raw
+  for topic, msg, time in bag.read_messages(topics=(namespace + "imu/rpy/raw","/" + namespace + "imu/rpy/raw")):
+    o_msg = matrix([msg.vector.x, msg.vector.y, msg.vector.z, 0])
+    o_msg = o_msg.T
+    transformed_msg = t_mat*o_msg
+    time_yaw_tuples.append((time.to_sec(), float(transformed_msg[2])))
+
+# if still no data, then exit.
+if len(time_yaw_tuples) < 100:
+  print("Insufficient data or no data in bag file. Looking for topic /" + namespace + "imu/rpy, or topic /" + namespace + "imu/rpy/raw)
+ exit(1)
 
 
 time_yaw = zip(*time_yaw_tuples)
