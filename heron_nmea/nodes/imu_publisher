@@ -52,7 +52,7 @@ class RawCompass(TxHelper):
 
     self.tx(self.gps_time(),
         self.compass_id,
-        (180 - degrees(heading)) % 360,
+        degrees(heading),
         -degrees(pitch),
         degrees(roll),
         self.gps_time(msg.header.stamp))

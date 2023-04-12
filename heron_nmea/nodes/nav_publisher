@@ -60,7 +60,7 @@ class Nav(TxHelper):
 
     # Override heading with value from GPS, when we have sufficient speed.
     if self.vel and hypot(self.vel.twist.linear.y, self.vel.twist.linear.x) > 0.2:
-      heading = (pi/2.0) + atan2(self.vel.twist.linear.y, self.vel.twist.linear.x)
+      heading = (pi/2.0) - atan2(self.vel.twist.linear.y, self.vel.twist.linear.x)
       if heading < 0: heading += 2*pi
       if heading >= 2*pi: heading -= 2*pi
 

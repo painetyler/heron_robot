@@ -32,7 +32,7 @@
     <group unless="$(optenv HERON_NO_WIRELESS false)">
       <group if="$(optenv USE_SNMP_CHECK_NODE true)">
         <node pkg="heron_base" type="snmp_lights.py" name="wifi_lights">
-          <param name="~ip_addr" value="$(optenv SNMP_IP 192.168.131.50)" />
+          <param name="~ip_addr" value="$(optenv SNMP_IP 192.168.1.113)" />
         </node>
       </group>
 
@@ -78,6 +78,7 @@
          <param name="use_magnetic_field_msg" value="true"/>
 	 <param name="mag_updates" value="false" />
 	 <param name="apply_mag_correction_transform" value="$(optenv MIT_CONFIG false)" />
+
        </node>
       </group>
 
@@ -92,30 +93,39 @@
          <param name="use_magnetic_field_msg" value="true"/>
 	 <param name="mag_updates" value="false" />
 	 <param name="apply_mag_correction_transform" value="$(optenv MIT_CONFIG false)" />
+
        </node>
       </group>
     </group>
 
-    <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_madgwick">
-      <rosparam file="$(env HERON_MAG_CONFIG)" />
-      <param name="~use_mag" value="$(arg use_mag)" />
-      <param name="world_frame" value="enu" />
-      <param name="publish_tf" value="false" />
-      <param name="publish_debug_topics" value="true" />
 
-      <!-- Set values according to IMU used -->
-      <group if="$(optenv HERON_IMU_UM6 0)">
-        <param name="~use_magnetic_field_msg" value="true" />
+    <!-- Set values according to IMU used -->
+    <group if="$(optenv HERON_IMU_UM6 0)">
+      <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_madgwick">
+        <rosparam file="$(env HERON_MAG_CONFIG)" />
+        <param name="~use_mag" value="$(arg use_mag)" />
+        <param name="publish_tf" value="false" />
+        <param name="publish_debug_topics" value="true" />
+        <param name="~use_magnetic_field_msg" value="true" />	
+        <param name="world_frame" value="enu" />
         <param name="~gain" value="0.5" />
         <param name="~zeta" value="0.0" />
         <param name="~orientation_stddev" value="0.5" />
-      </group>
-      <group unless="$(optenv HERON_IMU_UM6 0)">
+       </node>
+    </group>
+    
+    <group unless="$(optenv HERON_IMU_UM6 0)">
+       <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_madgwick">
+        <rosparam file="$(env HERON_MAG_CONFIG)" />
+        <param name="~use_mag" value="$(arg use_mag)" />
+        <param name="publish_tf" value="false" />
+        <param name="publish_debug_topics" value="true" />
         <param name="~use_magnetic_field_msg" value="true" />	
-      </group>
+        <param name="world_frame" value="enu" />
+       </node>
+    </group>
 
-    </node>
-
+    
     <!-- GPS serial comms -->
     <group ns="navsat">
 
