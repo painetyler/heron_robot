@@ -64,10 +64,17 @@ class Nav(TxHelper):
       if heading < 0: heading += 2*pi
       if heading >= 2*pi: heading -= 2*pi
 
+    # Need a custom string format for lat long
+    nmea_lat_flt  = nmea_deg(self.fix.latitude)
+    nmea_long_flt = nmea_deg(self.fix.longitude)
+    nmea_lat_str = ("%011.6f" % nmea_lat_flt).rstrip('0').rstrip('.')
+    nmea_long_str = ("%012.6f" % nmea_long_flt).rstrip('0').rstrip('.')
+
+
 
     self.tx(self.gps_time(),
-        nmea_deg(self.fix.latitude), nmea_NS(self.fix.latitude),
-        nmea_deg(self.fix.longitude), nmea_EW(self.fix.longitude),
+        nmea_lat_str, nmea_NS(self.fix.latitude),
+        nmea_long_str, nmea_EW(self.fix.longitude),
         1, # Pos quality. 1 = GPS, for now we don't publish unless there are fixes.
         0, # Altitude from bottom
         0, # Depth from surface
