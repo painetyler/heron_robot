@@ -29,6 +29,7 @@
             if="$(arg nav_enabled)" />
       <node pkg="heron_nmea" type="nav_publisher" name="nmea_nav">
         <param name="namespace" value="$(arg namespace)" />
+	<param name="mag_declination_rad" value="-0.2478" />
         <remap from="/$(arg namespace)/nmea_if/navsat/vel" to="/$(arg namespace)/navsat/vel" />
         <remap from="/$(arg namespace)/nmea_if/navsat/fix" to="/$(arg namespace)/navsat/fix" />
       </node>

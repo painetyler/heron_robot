@@ -26,7 +26,7 @@ def nmea_EW(decimal_degrees):
 class Nav(TxHelper):
   SENTENCE = "NVG"
 
-  def __init__(self):
+  def __init__(self, mag_declination_rad):
     rospy.loginfo("Waiting for ENU to_fix service.")
     rospy.loginfo("Service found, setting up NVG publisher.")
     self.sub_fix = rospy.Subscriber("navsat/fix", NavSatFix, self._fix_cb)
@@ -35,6 +35,7 @@ class Nav(TxHelper):
     self.sub_imu = rospy.Subscriber("imu/data", Imu, self._imu_cb)
     self.vel = None
     self.fix = None
+    self.mag_declination_rad = mag_declination_rad
 
   def _vel(self, msg):
     self.vel = msg
@@ -49,20 +50,28 @@ class Nav(TxHelper):
     if self.fix is None:
         return
 
-    # Try to get rph from odom message
-    roll, pitch, heading = sea_rpy_from_quaternion(msg.pose.pose.orientation)
 
-    # Override heading with value directly from IMU if EKF estimate is Nan
-    # This sometimes happens if GPS heading is non-existant, which results in
-    # NaN values for many state estimates from the EKF node.
-    if isnan(heading):
-      roll, pitch, heading = sea_rpy_from_quaternion(self.imu.orientation)
-
-    # Override heading with value from GPS, when we have sufficient speed.
+    # First, get heading with value from GPS when we have sufficient speed.
     if self.vel and hypot(self.vel.twist.linear.y, self.vel.twist.linear.x) > 0.2:
       heading = (pi/2.0) - atan2(self.vel.twist.linear.y, self.vel.twist.linear.x)
-      if heading < 0: heading += 2*pi
-      if heading >= 2*pi: heading -= 2*pi
+      
+    else:
+      # Then try to get rph from odom message from EKF
+      roll, pitch, heading = sea_rpy_from_quaternion(msg.pose.pose.orientation)
+
+      # Override heading with value directly from IMU if EKF estimate is Nan
+      # This sometimes happens if GPS heading is non-existant, which results in
+      # NaN values for many state estimates from the EKF node.
+      if isnan(heading):
+        roll, pitch, heading = sea_rpy_from_quaternion(self.imu.orientation)
+        
+      # Include (add) declination since both of these messages do not include
+      # declination
+      heading += self.mag_declination_rad
+
+    # Wrap angle if needed
+    if heading < 0: heading += 2*pi
+    if heading >= 2*pi: heading -= 2*pi
 
     # Need a custom string format for lat long
     nmea_lat_flt  = nmea_deg(self.fix.latitude)
@@ -114,7 +123,7 @@ if __name__ == "__main__":
   rospy.init_node('nmea_nav')
 
   namespace = rospy.get_param("~namespace", "") + "/"
-
+  mag_declination_rad = rospy.get_param("~mag_declination_rad", 0.0)
   tf_listener = TransformListener()
   tf_listener.waitForTransform(namespace + "base_link", namespace + "imu_link", rospy.Time(), rospy.Duration(10.0))
   sleep(1.0)
