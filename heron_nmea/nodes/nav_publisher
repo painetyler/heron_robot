@@ -51,24 +51,24 @@ class Nav(TxHelper):
         return
 
 
-    # First, get heading with value from GPS when we have sufficient speed.
+    # First try to get rph from odom message from EKF
+    roll, pitch, heading = sea_rpy_from_quaternion(msg.pose.pose.orientation)
+
+    # Override heading with value directly from IMU if EKF estimate is Nan
+    # This sometimes happens if GPS heading is non-existant, which results in
+    # NaN values for many state estimates from the EKF node.
+    if isnan(heading):
+      roll, pitch, heading = sea_rpy_from_quaternion(self.imu.orientation)
+        
+    # Include (add) declination since both of these messages do not include
+    # declination
+    heading += self.mag_declination_rad
+
+
+
+    # Override the estimate with GPS heading when we have sufficient speed.
     if self.vel and hypot(self.vel.twist.linear.y, self.vel.twist.linear.x) > 0.2:
       heading = (pi/2.0) - atan2(self.vel.twist.linear.y, self.vel.twist.linear.x)
-      
-    else:
-      # Then try to get rph from odom message from EKF
-      roll, pitch, heading = sea_rpy_from_quaternion(msg.pose.pose.orientation)
-
-      # Override heading with value directly from IMU if EKF estimate is Nan
-      # This sometimes happens if GPS heading is non-existant, which results in
-      # NaN values for many state estimates from the EKF node.
-      if isnan(heading):
-        roll, pitch, heading = sea_rpy_from_quaternion(self.imu.orientation)
-        
-      # Include (add) declination since both of these messages do not include
-      # declination
-      heading += self.mag_declination_rad
-
     # Wrap angle if needed
     if heading < 0: heading += 2*pi
     if heading >= 2*pi: heading -= 2*pi
