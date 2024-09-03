@@ -77,7 +77,7 @@
          <param name="frame_id" value="imu_link" />
          <param name="use_magnetic_field_msg" value="true"/>
 	 <param name="mag_updates" value="false" />
-	 <param name="apply_mag_correction_transform" value="$(optenv MIT_CONFIG false)" />
+	 <param name="apply_mag_correction_transform" value="true" />
 
        </node>
       </group>
@@ -92,7 +92,7 @@
          <param name="frame_id" value="$(arg namespace)/imu_link" />
          <param name="use_magnetic_field_msg" value="true"/>
 	 <param name="mag_updates" value="false" />
-	 <param name="apply_mag_correction_transform" value="$(optenv MIT_CONFIG false)" />
+	 <param name="apply_mag_correction_transform" value="true" />
 
        </node>
       </group>
@@ -108,9 +108,9 @@
         <param name="publish_debug_topics" value="true" />
         <param name="~use_magnetic_field_msg" value="true" />	
         <param name="world_frame" value="enu" />
-        <param name="~gain" value="0.5" />
+        <param name="~gain" value="0.4" />
         <param name="~zeta" value="0.0" />
-        <param name="~orientation_stddev" value="0.5" />
+        <param name="~orientation_stddev" value="0.9" />
        </node>
     </group>
     
