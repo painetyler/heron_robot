@@ -77,7 +77,7 @@
          <param name="frame_id" value="imu_link" />
          <param name="use_magnetic_field_msg" value="true"/>
 	 <param name="mag_updates" value="false" />
-	 <param name="apply_mag_correction_transform" value="true" />
+	 <param name="apply_mag_correction_transform" value="$(optenv UM6_MAG_CORRECTION true)" />
 
        </node>
       </group>
@@ -92,7 +92,7 @@
          <param name="frame_id" value="$(arg namespace)/imu_link" />
          <param name="use_magnetic_field_msg" value="true"/>
 	 <param name="mag_updates" value="false" />
-	 <param name="apply_mag_correction_transform" value="true" />
+	 <param name="apply_mag_correction_transform" value="$(optenv UM6_MAG_CORRECTION true)" />
 
        </node>
       </group>
